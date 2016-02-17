@@ -1,0 +1,4 @@
+examples_rootcert.patch
+examples_encrypt3.patch
+skip-failing-tests.patch
+skip-online-tests.patch

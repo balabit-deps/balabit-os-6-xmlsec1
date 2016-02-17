@@ -1,0 +1,45 @@
+Description: Skip failing tests due to disabled lib plugins
+ Some tests require of dynamic loading of crypto libraries
+ in xmlsec1 apps - we disable this in the build, so only test
+ with the default openssl lib.
+Author: James Page <james.page@ubuntu.com>
+Forwarded: not-needed
+
+--- a/tests/testDSig.sh
++++ b/tests/testDSig.sh
+@@ -788,6 +788,8 @@ execDSigTest $res_success \
+ # test dynamic signature
+ #
+ ##########################################################################
++
++if [ $crypto = 'openssl' ]; then
+ echo "Dynamic signature template"
+ printf "    Create new signature                                 "
+ echo "$xmlsec_app sign-tmpl $xmlsec_params --keys-file $keysfile --output $tmpfile" >> $logfile
+@@ -797,6 +799,7 @@ printf "    Verify new signature
+ echo "$xmlsec_app verify --keys-file $keysfile $tmpfile" >> $logfile
+ $VALGRIND $xmlsec_app verify $xmlsec_params --keys-file $keysfile $tmpfile >> $logfile 2>> $logfile
+ printRes $res_success $?
++fi
+ 
+ 
+ ##########################################################################
+--- a/tests/testEnc.sh
++++ b/tests/testEnc.sh
+@@ -366,6 +366,8 @@ execEncTest $res_success \
+ # test dynamicencryption
+ #
+ ##########################################################################
++
++if [ $crypto = 'openssl' ]; then
+ echo "Dynamic encryption template"
+ printf "    Encrypt template                                     "
+ echo "$xmlsec_app encrypt-tmpl $xmlsec_params --keys-file $keysfile --output $tmpfile" >> $logfile
+@@ -375,6 +377,7 @@ printf "    Decrypt document
+ echo "$xmlsec_app decrypt $xmlsec_params $keysfile $tmpfile" >> $logfile
+ $VALGRIND $xmlsec_app decrypt $xmlsec_params --keys-file $keysfile $tmpfile >> $logfile 2>> $logfile
+ printRes $res_success $?
++fi
+ 
+ 
+ ##########################################################################

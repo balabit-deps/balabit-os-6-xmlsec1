@@ -1,0 +1,294 @@
+From 3911df4379f1eb2eba03237a2e1078fdbf71b3d7 Mon Sep 17 00:00:00 2001
+From: Aleksey Sanin <aleksey@aleksey.com>
+Date: Mon, 7 Jul 2014 09:24:38 -0700
+Subject: fix rootcert -> cacert renaming (fixed bug 732755)
+
+
+diff --git a/docs/api/xmlsec-examples-sign-x509.html b/docs/api/xmlsec-examples-sign-x509.html
+index a924203..129e980 100644
+--- a/docs/api/xmlsec-examples-sign-x509.html
++++ b/docs/api/xmlsec-examples-sign-x509.html
+@@ -110,7 +110,7 @@
+  *      ./sign3 sign3-doc.xml rsakey.pem rsacert.pem &gt; sign3-res.xml
+  *
+  * The result signature could be validated using verify3 example:
+- *      ./verify3 sign3-res.xml rootcert.pem
++ *      ./verify3 sign3-res.xml ca2cert.pem cacert.pem
+  *
+  * This is free software; see Copyright file in the source
+  * distribution for preciese wording.
+diff --git a/docs/api/xmlsec-verify-with-restrictions.html b/docs/api/xmlsec-verify-with-restrictions.html
+index 86116c8..661e675 100644
+--- a/docs/api/xmlsec-verify-with-restrictions.html
++++ b/docs/api/xmlsec-verify-with-restrictions.html
+@@ -107,12 +107,12 @@
+  *      verify4 &lt;signed-file&gt; &lt;trusted-cert-pem-file1&gt; [&lt;trusted-cert-pem-file2&gt; [...]]
+  *
+  * Example (sucecess):
+- *      ./verify4 verify4-res.xml rootcert.pem
++ *      ./verify4 verify4-res.xml ca2cert.pem cacert.pem
+  *
+  * Example (failure):
+- *      ./verify4 verify4-bad-res.xml rootcert.pem
++ *      ./verify4 verify4-bad-res.xml ca2cert.pem cacert.pem
+  * In the same time, verify3 example successfuly verifies this signature:
+- *      ./verify3 verify4-bad-res.xml rootcert.pem
++ *      ./verify3 verify4-bad-res.xml ca2cert.pem cacert.pem
+  *
+  * This is free software; see Copyright file in the source
+  * distribution for preciese wording.
+diff --git a/docs/api/xmlsec-verify-with-x509.html b/docs/api/xmlsec-verify-with-x509.html
+index c5feacf..27a087a 100644
+--- a/docs/api/xmlsec-verify-with-x509.html
++++ b/docs/api/xmlsec-verify-with-x509.html
+@@ -104,7 +104,7 @@
+  *      verify3 &lt;signed-file&gt; &lt;trusted-cert-pem-file1&gt; [&lt;trusted-cert-pem-file2&gt; [...]]
+  *
+  * Example:
+- *      ./verify3 sign3-res.xml rootcert.pem
++ *      ./verify3 sign3-res.xml ca2cert.pem cacert.pem
+  * 
+  * This is free software; see Copyright file in the source
+  * distribution for preciese wording.
+diff --git a/examples/Makefile b/examples/Makefile
+index a237b98..4385033 100644
+--- a/examples/Makefile
++++ b/examples/Makefile
+@@ -26,8 +26,8 @@ check: $(PROGRAMS)
+ 	./verify1  sign2-res.xml     rsapub.pem
+ 	./verify2  sign1-res.xml     rsapub.pem
+ 	./verify2  sign2-res.xml     rsapub.pem
+-	./verify3  sign3-res.xml     rootcert.pem
+-	./verify4  verify4-res.xml   rootcert.pem
++	./verify3  sign3-res.xml     ca2cert.pem cacert.pem
++	./verify4  verify4-res.xml   ca2cert.pem cacert.pem
+ 	./encrypt1 encrypt1-tmpl.xml deskey.bin
+ 	./encrypt2 encrypt2-doc.xml  deskey.bin 
+ 	./encrypt3 encrypt3-doc.xml  rsakey.pem
+diff --git a/examples/README b/examples/README
+index dbdaf7a..efbe0b2 100644
+--- a/examples/README
++++ b/examples/README
+@@ -3,42 +3,43 @@ This folder contains XML Security Library examples.
+ 1. Files List
+ -------------------------
+ 
+-    README			This file.
+-    Makefile			*nix makefile.
+-    Makefile.w32		Win32 makefile.
+-    rsakey.pem			Private PEM key file
+-    rsapub.pem			Public PEM key file
+-    rsacert.pem			Certificate for rsakey.pem signed with rootcert.pem
+-    rootcert.pem		Root (trusted) certificate
+-    deskey.bin			A DES keys
+-    sign1.c			Signing with a template file
+-    sign1-tmpl.xml		An example template file for sign1 example
+-    sign1-res.xml		The result of processing sign1_tmpl.xml by sign1.c
+-    sign2.c			Signing a file with a dynamicaly created template
+-    sign2-doc.xml		An example XML file for signing by sign2.c
+-    sign2-res.xml		The result of signing sign2-doc.xml by sign2.c
+-    sign3.c			Signing a file with a dynamicaly created template and an X509 certificate
+-    sign3-doc.xml		An example XML file for signing by sign3.c
+-    sign3-res.xml		The result of signing sign3-doc.xml by sign3.c
+-    verify1.c			Verifying a signed document with a single key
+-    verify2.c			Verifying a signed document using keys manager
+-    verify3.c			Verifying a signed document using X509 certificate
+-    verify4.c			Verifying a simple SAML response using X509 certificate
+-    verify4-tmpl.xml		An example template file with a simple SAML response for verify4 example
+-    verify4-res.xml		Signed simple SAML response for verification by verify4.c 
+-    encrypt1.c			Encrypting binary data with a template file
+-    encrypt1-res.xml		An example template file for encrypt1.c
+-    encrypt1-tmpl.xml		The result of processing encrypt1_tmpl.xml by encrypt1.c
+-    encrypt2.c			Encrypting XML file using a dynamicaly created template
+-    encrypt2-doc.xml		An example XML file for encryption by encrypt2.c
+-    encrypt2-res.xml		The result of encryptin encrypt2-doc.xml by encrypt2.c
+-    encrypt2.c			Encrypting XML file using a session DES key
+-    encrypt2-doc.xml		An example XML file for encryption by encrypt3.c
+-    encrypt2-res.xml		The result of encryptin encrypt3-doc.xml by encrypt3.c
+-    decrypt1.c			Decrypting binary data using a single key
+-    decrypt2.c			Decrypting binary data using keys manager
+-    decrypt3.c			Decrypting binary file using custom keys manager
+-    xmldsigverify.c		CGI script for signatures verifications
++    README              This file.
++    Makefile            *nix makefile.
++    Makefile.w32        Win32 makefile.
++    cacert.pem          Root (trusted) certificate
++    ca2cert.pem         CA (trusted) certificate (signed with cacert.pem)
++    rsakey.pem          Private PEM key file
++    rsapub.pem          Public PEM key file
++    rsacert.pem         Certificate for rsakey.pem signed with ca2cert.pem
++    deskey.bin          A DES keys
++    sign1.c             Signing with a template file
++    sign1-tmpl.xml      An example template file for sign1 example
++    sign1-res.xml       The result of processing sign1_tmpl.xml by sign1.c
++    sign2.c             Signing a file with a dynamicaly created template
++    sign2-doc.xml       An example XML file for signing by sign2.c
++    sign2-res.xml       The result of signing sign2-doc.xml by sign2.c
++    sign3.c             Signing a file with a dynamicaly created template and an X509 certificate
++    sign3-doc.xml       An example XML file for signing by sign3.c
++    sign3-res.xml       The result of signing sign3-doc.xml by sign3.c
++    verify1.c           Verifying a signed document with a single key
++    verify2.c           Verifying a signed document using keys manager
++    verify3.c           Verifying a signed document using X509 certificate
++    verify4.c           Verifying a simple SAML response using X509 certificate
++    verify4-tmpl.xml    An example template file with a simple SAML response for verify4 example
++    verify4-res.xml     Signed simple SAML response for verification by verify4.c 
++    encrypt1.c          Encrypting binary data with a template file
++    encrypt1-res.xml    An example template file for encrypt1.c
++    encrypt1-tmpl.xml   The result of processing encrypt1_tmpl.xml by encrypt1.c
++    encrypt2.c          Encrypting XML file using a dynamicaly created template
++    encrypt2-doc.xml    An example XML file for encryption by encrypt2.c
++    encrypt2-res.xml    The result of encryptin encrypt2-doc.xml by encrypt2.c
++    encrypt2.c          Encrypting XML file using a session DES key
++    encrypt2-doc.xml    An example XML file for encryption by encrypt3.c
++    encrypt2-res.xml    The result of encryptin encrypt3-doc.xml by encrypt3.c
++    decrypt1.c          Decrypting binary data using a single key
++    decrypt2.c          Decrypting binary data using keys manager
++    decrypt3.c          Decrypting binary file using custom keys manager
++    xmldsigverify.c     CGI script for signatures verifications
+ 
+ 2. Building Examples 
+ -------------------------
+@@ -70,57 +71,44 @@ Other platforms:
+ The following are just examples and you can use the programs from this
+ folder with any other input files:
+     
+-	./sign1    sign1-tmpl.xml    rsakey.pem
+-	./sign2    sign2-doc.xml     rsakey.pem
+-	./sign3    sign3-doc.xml     rsakey.pem rsacert.pem
+-
+-	./verify1  sign1-res.xml     rsapub.pem
+-	./verify1  sign2-res.xml     rsapub.pem
+-	./verify2  sign1-res.xml     rsapub.pem
+-	./verify2  sign2-res.xml     rsapub.pem
+-	./verify3  sign3-res.xml     ca2cert.pem cacert.pem 
+-	./verify4  verify4-res.xml   ca2cert.pem cacert.pem 
+-
+-	./encrypt1 encrypt1-tmpl.xml deskey.bin
+-	./encrypt2 encrypt2-doc.xml  deskey.bin 
+-	./encrypt3 encrypt3-doc.xml  rsakey.pem
+-
+-	./decrypt1 encrypt1-res.xml  deskey.bin
+-	./decrypt1 encrypt2-res.xml  deskey.bin
+-	./decrypt2 encrypt1-res.xml  deskey.bin
+-	./decrypt2 encrypt2-res.xml  deskey.bin
+-	./decrypt3 encrypt1-res.xml
+-	./decrypt3 encrypt2-res.xml
+-	./decrypt3 encrypt3-res.xml
++    ./sign1    sign1-tmpl.xml    rsakey.pem
++    ./sign2    sign2-doc.xml     rsakey.pem
++    ./sign3    sign3-doc.xml     rsakey.pem rsacert.pem
++
++    ./verify1  sign1-res.xml     rsapub.pem
++    ./verify1  sign2-res.xml     rsapub.pem
++    ./verify2  sign1-res.xml     rsapub.pem
++    ./verify2  sign2-res.xml     rsapub.pem
++    ./verify3  sign3-res.xml     ca2cert.pem cacert.pem 
++    ./verify4  verify4-res.xml   ca2cert.pem cacert.pem 
++
++    ./encrypt1 encrypt1-tmpl.xml deskey.bin
++    ./encrypt2 encrypt2-doc.xml  deskey.bin 
++    ./encrypt3 encrypt3-doc.xml  rsakey.pem
++
++    ./decrypt1 encrypt1-res.xml  deskey.bin
++    ./decrypt1 encrypt2-res.xml  deskey.bin
++    ./decrypt2 encrypt1-res.xml  deskey.bin
++    ./decrypt2 encrypt2-res.xml  deskey.bin
++    ./decrypt3 encrypt1-res.xml
++    ./decrypt3 encrypt2-res.xml
++    ./decrypt3 encrypt3-res.xml
+     
+ 4. Using xmlsec command line tool.
+ -------------------------
+-For Windows, use "xmlsec" instead of "xmlsec1".
+-	xmlsec1 sign --privkey rsakey.pem --output sign1.xml sign1-tmpl.xml
+-	xmlsec1 verify --pubkey rsapub.pem sign1.xml
+-	xmlsec1 verify --pubkey rsapub.pem sign1-res.xml
+-	xmlsec1 verify --pubkey rsapub.pem sign2-res.xml
+-	xmlsec1 verify --trusted ca2cert.pem --trusted cacert.pem sign3-res.xml
+-	xmlsec1 verify --trusted ca2cert.pem --trusted cacert.pem verify4-res.xml
+-	 
+-	xmlsec1 encrypt --deskey deskey.bin  --binary-data binary.dat --output encrypt1.xml encrypt1-tmpl.xml
++For Windows, use "xmlsec" instead of "xmlsec1":
++
++    xmlsec1 sign --privkey rsakey.pem --output sign1.xml sign1-tmpl.xml
++    xmlsec1 verify --pubkey rsapub.pem sign1.xml
++    xmlsec1 verify --pubkey rsapub.pem sign1-res.xml
++    xmlsec1 verify --pubkey rsapub.pem sign2-res.xml
++    xmlsec1 verify --trusted ca2cert.pem --trusted cacert.pem sign3-res.xml
++    xmlsec1 verify --trusted ca2cert.pem --trusted cacert.pem verify4-res.xml
++     
++    xmlsec1 encrypt --deskey deskey.bin  --binary-data binary.dat --output encrypt1.xml encrypt1-tmpl.xml
+     xmlsec1 decrypt --deskey deskey.bin encrypt1.xml
+-	xmlsec1 decrypt --deskey deskey.bin encrypt1-res.xml
+-	xmlsec1 decrypt --deskey deskey.bin encrypt2-res.xml
+-	xmlsec1 decrypt --privkey rsakey.pem encrypt3-res.xml
+-
+-	
+-	
+-	 
+-	 
+-	 
+-	 
+-	 
+-
+-	 
+-	 
+-	 
+-	 
+-	 
+-	 
++    xmlsec1 decrypt --deskey deskey.bin encrypt1-res.xml
++    xmlsec1 decrypt --deskey deskey.bin encrypt2-res.xml
++    xmlsec1 decrypt --privkey rsakey.pem encrypt3-res.xml
++ 
+ 
+diff --git a/examples/sign3.c b/examples/sign3.c
+index 9d16cf7..da249e2 100644
+--- a/examples/sign3.c
++++ b/examples/sign3.c
+@@ -16,7 +16,7 @@
+  *      ./sign3 sign3-doc.xml rsakey.pem rsacert.pem > sign3-res.xml
+  *
+  * The result signature could be validated using verify3 example:
+- *      ./verify3 sign3-res.xml rootcert.pem
++ *      ./verify3 sign3-res.xml ca2cert.pem cacert.pem
+  *
+  * This is free software; see Copyright file in the source
+  * distribution for preciese wording.
+diff --git a/examples/verify3.c b/examples/verify3.c
+index 5f0666b..e710d6e 100644
+--- a/examples/verify3.c
++++ b/examples/verify3.c
+@@ -10,7 +10,7 @@
+  *      verify3 <signed-file> <trusted-cert-pem-file1> [<trusted-cert-pem-file2> [...]]
+  *
+  * Example:
+- *      ./verify3 sign3-res.xml rootcert.pem
++ *      ./verify3 sign3-res.xml ca2cert.pem cacert.pem
+  * 
+  * This is free software; see Copyright file in the source
+  * distribution for preciese wording.
+diff --git a/examples/verify4.c b/examples/verify4.c
+index f55f58c..36a412f 100644
+--- a/examples/verify4.c
++++ b/examples/verify4.c
+@@ -13,12 +13,12 @@
+  *      verify4 <signed-file> <trusted-cert-pem-file1> [<trusted-cert-pem-file2> [...]]
+  *
+  * Example (sucecess):
+- *      ./verify4 verify4-res.xml rootcert.pem
++ *      ./verify4 verify4-res.xml ca2cert.pem cacert.pem
+  *
+  * Example (failure):
+- *      ./verify4 verify4-bad-res.xml rootcert.pem
++ *      ./verify4 verify4-bad-res.xml ca2cert.pem cacert.pem
+  * In the same time, verify3 example successfuly verifies this signature:
+- *      ./verify3 verify4-bad-res.xml rootcert.pem
++ *      ./verify3 verify4-bad-res.xml ca2cert.pem cacert.pem
+  *
+  * This is free software; see Copyright file in the source
+  * distribution for preciese wording.
+-- 
+cgit v0.10.1
+
